@@ -1,0 +1,21 @@
+# ====== macOS Junk ======
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# ====== Xcode User Data ======
+# Blocks your personal window layouts and breakpoints from being tracked
+xcuserdata/
+*.xcuserstate
+*.xcbkptlist
+
+# ====== Xcode Build Results ======
+# Blocks compiled apps and build caches
+build/
+DerivedData/
+*.moved-aside
+
+# ====== Swift Package Manager ======
+# If you pull in external packages later, this ignores the local build caches
+.build/
+.swiftpm/
