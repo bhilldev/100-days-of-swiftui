@@ -7,9 +7,9 @@ protocol Building {
     var cost: Int { get set }
     var agent: String { get set }
 }
-extension Building{
-    
-    func printSummary(){
+
+extension Building {
+    func printSummary() {
         // Convert the raw integer into a localized currency string
         let formattedCost = cost.formatted(.currency(code: "USD"))
         print("""
@@ -22,12 +22,14 @@ extension Building{
             """)
     }
 }
+
 struct Office : Building {
     let buildingType = "Office"
     var rooms: Int
     var cost: Int
     var agent: String
 }
+
 struct House : Building {
     let buildingType = "House"
     var rooms: Int
