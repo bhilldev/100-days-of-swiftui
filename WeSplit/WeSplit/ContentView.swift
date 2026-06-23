@@ -7,6 +7,14 @@
 
 import SwiftUI
 
+struct ZeroTipWarning: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .listRowBackground(Color.red)
+            .foregroundStyle(Color.white)
+    }
+}
+
 struct ContentView: View {
     @State private var checkAmount = 0.0
     @State private var numberOfPeople = 2
@@ -26,9 +34,9 @@ struct ContentView: View {
         return amountPerPerson
     }
     var totalAmount: Double {
-            let tipValue = checkAmount / 100 * Double(tipPercentage)
-            return checkAmount + tipValue
-        }
+        let tipValue = checkAmount / 100 * Double(tipPercentage)
+        return checkAmount + tipValue
+    }
     
     var body: some View {
         NavigationStack {
@@ -55,7 +63,12 @@ struct ContentView: View {
                     Text(totalPerPerson, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
                 }
                 Section("Total amount for check") {
-                    Text(totalAmount, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
+                    if(tipPercentage == 0){
+                        Text(totalAmount, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
+                            .modifier(ZeroTipWarning())
+                    } else {
+                        Text(totalAmount, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
+                    }
                 }
             }
             .navigationTitle("WeSplit")
@@ -68,4 +81,7 @@ struct ContentView: View {
             }
         }
     }
+}
+#Preview {
+    ContentView()
 }
