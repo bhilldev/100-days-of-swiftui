@@ -7,13 +7,41 @@
 
 import SwiftUI
 
-struct ExpenseItem: Identifiable, Codable
-{
+// MARK: - Model
+
+struct ExpenseItem: Identifiable, Codable {
     var id = UUID()
     let name: String
     let type: String
     let amount: Double
 }
+
+// MARK: - Styling
+
+extension ExpenseItem {
+
+    var amountColor: Color {
+        if amount < 10 {
+            .green
+        } else if amount < 100 {
+            .primary
+        } else {
+            .red
+        }
+    }
+
+    var amountWeight: Font.Weight {
+        if amount < 10 {
+            .regular
+        } else if amount < 100 {
+            .semibold
+        } else {
+            .bold
+        }
+    }
+}
+
+// MARK: - Store
 
 @Observable
 class Expenses {
@@ -24,10 +52,11 @@ class Expenses {
             }
         }
     }
+
     init() {
         if let savedItems = UserDefaults.standard.data(forKey: "Items") {
-            if let decodedItems = try? JSONDecoder().decode([ExpenseItem].self, from: savedItems) {
-                items = decodedItems
+            if let decoded = try? JSONDecoder().decode([ExpenseItem].self, from: savedItems) {
+                items = decoded
                 return
             }
         }
@@ -36,29 +65,48 @@ class Expenses {
     }
 }
 
+// MARK: - View
+
 struct ContentView: View {
     @State private var expenses = Expenses()
     @State private var showingAddExpense = false
+    @Environment(\.locale) private var locale
+
     var body: some View {
         NavigationStack {
             List {
-                ForEach(expenses.items) { item in
-                    HStack {
-                            VStack(alignment: .leading) {
-                                Text(item.name)
-                                    .font(.headline)
-                                Text(item.type)
-                            }
 
-                            Spacer()
-                            Text(item.amount, format: .currency(code: "USD"))
+                ForEach(groupedExpenses.keys.sorted(), id: \.self) { key in
+                    Section(key) {
+
+                        ForEach(groupedExpenses[key] ?? []) { item in
+                            HStack {
+                                VStack(alignment: .leading) {
+                                    Text(item.name)
+                                        .font(.headline)
+
+                                    Text(item.type)
+                                        .foregroundStyle(.secondary)
+                                }
+
+                                Spacer()
+
+                                Text(
+                                    item.amount,
+                                    format: .currency(code: locale.currency?.identifier ?? "USD")
+                                )
+                                .foregroundStyle(item.amountColor)
+                                .fontWeight(item.amountWeight)
+                            }
                         }
+                        .onDelete { offsets in
+                            deleteItems(type: key, offsets: offsets)
+                        }
+                    }
                 }
-                .onDelete(perform: removeItems)
             }
             .navigationTitle("iExpense")
             .sheet(isPresented: $showingAddExpense) {
-                // show an AddView here
                 AddView(expenses: expenses)
             }
             .toolbar {
@@ -68,12 +116,30 @@ struct ContentView: View {
             }
         }
     }
-    func removeItems(at offsets: IndexSet) {
-        expenses.items.remove(atOffsets: offsets)
+
+    // MARK: - Grouping
+
+    var groupedExpenses: [String: [ExpenseItem]] {
+        Dictionary(grouping: expenses.items, by: { $0.type })
     }
-    
+
+    // MARK: - Delete safely
+
+    func deleteItems(type: String, offsets: IndexSet) {
+        let items = groupedExpenses[type] ?? []
+
+        for index in offsets {
+            let item = items[index]
+
+            if let originalIndex = expenses.items.firstIndex(where: { $0.id == item.id }) {
+                expenses.items.remove(at: originalIndex)
+            }
+        }
+    }
 }
 
 #Preview {
     ContentView()
 }
+
+
