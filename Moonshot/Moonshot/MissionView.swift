@@ -14,7 +14,6 @@ struct CrewMember {
 
 struct MissionView: View {
     let crew: [CrewMember]
-    
     init(mission: Mission, astronauts: [String: Astronaut]) {
         self.mission = mission
 
@@ -39,37 +38,11 @@ struct MissionView: View {
                         width * 0.6
                     }
                     .padding(.top)
-
+                Text("\(mission.formattedLaunchDate)")
                 VStack(alignment: .leading) {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack {
-                            ForEach(crew, id: \.role) { crewMember in
-                                NavigationLink {
-                                    AstronautView(astronaut: crewMember.astronaut)
-                                } label: {
-                                    HStack {
-                                        Image(crewMember.astronaut.id)
-                                            .resizable()
-                                            .frame(width: 104, height: 72)
-                                            .clipShape(.capsule)
-                                            .overlay(
-                                                Capsule()
-                                                    .strokeBorder(.white, lineWidth: 1)
-                                            )
+                    // Extracted crew list into its own SwiftUI view.
+                    CrewScrollView(crew: crew)
 
-                                        VStack(alignment: .leading) {
-                                            Text(crewMember.astronaut.name)
-                                                .foregroundStyle(.white)
-                                                .font(.headline)
-                                            Text(crewMember.role)
-                                                .foregroundStyle(.white.opacity(0.5))
-                                        }
-                                    }
-                                    .padding(.horizontal)
-                                }
-                            }
-                        }
-                    }
                     Text("Mission Highlights")
                         .font(.title.bold())
                         .padding(.bottom, 5)
