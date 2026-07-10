@@ -39,7 +39,6 @@ struct CrewScrollView: View {
                     }
                 }
             }
-        // Closed the horizontal ScrollView before ending the body.
         }
     }
 }
