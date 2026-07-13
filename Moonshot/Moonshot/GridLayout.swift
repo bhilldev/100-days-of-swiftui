@@ -8,7 +8,6 @@
 import SwiftUI
 
 struct GridLayout: View {
-    let astronauts: [String: Astronaut]
     let missions: [Mission]
 
     let columns = [
@@ -18,9 +17,8 @@ struct GridLayout: View {
     var body: some View {
         LazyVGrid(columns: columns) {
             ForEach(missions) { mission in
-                NavigationLink {
-                    MissionView(mission: mission, astronauts: astronauts)
-                } label: {
+                // Pass the selection as data; ContentView decides which screen to show.
+                NavigationLink(value: mission) {
                     MissionCardView(mission: mission)
                 }
             }
@@ -35,7 +33,11 @@ struct GridLayout: View {
 
     return NavigationStack {
         ScrollView {
-            GridLayout(astronauts: astronauts, missions: missions)
+            GridLayout(missions: missions)
+        }
+        // This preview has its own NavigationStack, so it needs its own destination rule.
+        .navigationDestination(for: Mission.self) { mission in
+            MissionView(mission: mission, astronauts: astronauts)
         }
         .background(.darkBackground)
         .preferredColorScheme(.dark)

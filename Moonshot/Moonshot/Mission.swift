@@ -12,9 +12,11 @@ struct CrewRole: Codable {
     let role: String
 }
 
-struct Mission: Codable, Identifiable {
+// Navigation values must be Hashable so SwiftUI can store them in its navigation path.
+struct Mission: Codable, Identifiable, Hashable {
     
-    struct CrewRole: Codable {
+    // Mission can synthesize Hashable only when every stored property is also Hashable.
+    struct CrewRole: Codable, Hashable {
         let name: String
         let role: String
     }

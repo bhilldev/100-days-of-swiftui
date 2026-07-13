@@ -8,15 +8,13 @@
 import SwiftUI
 
 struct ListLayout: View {
-    let astronauts: [String: Astronaut]
     let missions: [Mission]
 
     var body: some View {
         LazyVStack {
             ForEach(missions) { mission in
-                NavigationLink {
-                    MissionView(mission: mission, astronauts: astronauts)
-                } label: {
+                // Pass the selection as data; ContentView decides which screen to show.
+                NavigationLink(value: mission) {
                     MissionCardView(mission: mission)
                 }
             }
@@ -31,7 +29,11 @@ struct ListLayout: View {
 
     return NavigationStack {
         ScrollView {
-            ListLayout(astronauts: astronauts, missions: missions)
+            ListLayout(missions: missions)
+        }
+        // This preview has its own NavigationStack, so it needs its own destination rule.
+        .navigationDestination(for: Mission.self) { mission in
+            MissionView(mission: mission, astronauts: astronauts)
         }
         .background(.darkBackground)
         .preferredColorScheme(.dark)

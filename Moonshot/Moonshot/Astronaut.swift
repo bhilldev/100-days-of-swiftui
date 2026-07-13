@@ -6,7 +6,9 @@
 //
 
 import Foundation
-struct Astronaut: Codable, Identifiable {
+
+// Navigation values must be Hashable so SwiftUI can store them in its navigation path.
+struct Astronaut: Codable, Identifiable, Hashable {
     let id: String
     let name: String
     let description: String

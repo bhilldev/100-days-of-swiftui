@@ -14,9 +14,8 @@ struct CrewScrollView: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack {
                 ForEach(crew, id: \.role) { crewMember in
-                    NavigationLink {
-                        AstronautView(astronaut: crewMember.astronaut)
-                    } label: {
+                    // Pass the astronaut value; the shared NavigationStack builds the screen.
+                    NavigationLink(value: crewMember.astronaut) {
                         HStack {
                             Image(crewMember.astronaut.id)
                                 .resizable()
@@ -57,6 +56,12 @@ struct CrewScrollView: View {
         }
     }
 
-    return CrewScrollView(crew: crew)
-        .preferredColorScheme(.dark)
+    return NavigationStack {
+        CrewScrollView(crew: crew)
+            // This preview needs its own rule because it is outside ContentView's stack.
+            .navigationDestination(for: Astronaut.self) { astronaut in
+                AstronautView(astronaut: astronaut)
+            }
+            .preferredColorScheme(.dark)
+    }
 }

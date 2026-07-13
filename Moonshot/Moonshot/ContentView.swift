@@ -18,9 +18,9 @@ struct ContentView: View {
             ScrollView {
                 Group {
                     if showingGrid {
-                        GridLayout(astronauts: astronauts, missions: missions)
+                        GridLayout(missions: missions)
                     } else {
-                        ListLayout(astronauts: astronauts, missions: missions)
+                        ListLayout(missions: missions)
                     }
                 }
             }
@@ -33,6 +33,14 @@ struct ContentView: View {
                 } label: {
                     Image(systemName: showingGrid ? "list.bullet" : "square.grid.2x2")
                 }
+            }
+            // Define mission navigation once so both layouts can link using mission values.
+            .navigationDestination(for: Mission.self) { mission in
+                MissionView(mission: mission, astronauts: astronauts)
+            }
+            // Crew links pass an astronaut value, and this shared stack builds its screen.
+            .navigationDestination(for: Astronaut.self) { astronaut in
+                AstronautView(astronaut: astronaut)
             }
         }
     }
