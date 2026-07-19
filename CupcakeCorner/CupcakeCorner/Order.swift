@@ -5,8 +5,8 @@
 //  Created by Brandon Hill on 7/17/26.
 //
 
-import SwiftUI
-import Observation
+
+import Foundation
 
 @Observable
 class Order: Codable {
@@ -17,48 +17,23 @@ class Order: Codable {
         case _extraFrosting = "extraFrosting"
         case _addSprinkles = "addSprinkles"
         case _name = "name"
-        case _city = "city"
         case _streetAddress = "streetAddress"
+        case _city = "city"
         case _zip = "zip"
     }
-    
+
+    // Explicit string keys to prevent typos
+    enum DefaultsKey {
+        static let name = "order.name"
+        static let streetAddress = "order.streetAddress"
+        static let city = "order.city"
+        static let zip = "order.zip"
+    }
+
     static let types = ["Vanilla", "Strawberry", "Chocolate", "Rainbow"]
 
     var type = 0
     var quantity = 3
-    
-    var name = ""
-    var streetAddress = ""
-    var city = ""
-    var zip = ""
-    
-    var cost: Decimal {
-        // $2 per cake
-        var cost = Decimal(quantity) * 2
-
-        // complicated cakes cost more
-        cost += Decimal(type) / 2
-
-        // $1/cake for extra frosting
-        if extraFrosting {
-            cost += Decimal(quantity)
-        }
-
-        // $0.50/cake for sprinkles
-        if addSprinkles {
-            cost += Decimal(quantity) / 2
-        }
-
-        return cost
-    }
-    
-    var hasValidAddress: Bool {
-        if name.isEmpty || streetAddress.isEmpty || city.isEmpty || zip.isEmpty {
-            return false
-        }
-
-        return true
-    }
 
     var specialRequestEnabled = false {
         didSet {
@@ -70,4 +45,26 @@ class Order: Codable {
     }
     var extraFrosting = false
     var addSprinkles = false
+
+    // Address fields
+    var name = ""
+    var streetAddress = ""
+    var city = ""
+    var zip = ""
+
+    // Manual init to read saved properties on startup
+    init() {
+        self.name = UserDefaults.standard.string(forKey: DefaultsKey.name) ?? ""
+        self.streetAddress = UserDefaults.standard.string(forKey: DefaultsKey.streetAddress) ?? ""
+        self.city = UserDefaults.standard.string(forKey: DefaultsKey.city) ?? ""
+        self.zip = UserDefaults.standard.string(forKey: DefaultsKey.zip) ?? ""
+    }
+
+    // Explicit method to write current properties down to disk
+    func saveAddress() {
+        UserDefaults.standard.set(name, forKey: DefaultsKey.name)
+        UserDefaults.standard.set(streetAddress, forKey: DefaultsKey.streetAddress)
+        UserDefaults.standard.set(city, forKey: DefaultsKey.city)
+        UserDefaults.standard.set(zip, forKey: DefaultsKey.zip)
+    }
 }

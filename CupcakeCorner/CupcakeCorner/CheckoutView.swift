@@ -13,6 +13,10 @@ struct CheckoutView: View {
     @State private var confirmationMessage = ""
     @State private var showingConfirmation = false
     
+    // Challenge 2: Network error alerts
+    @State private var errorMessage = ""
+    @State private var showingError = false
+
     func placeOrder() async {
         guard let encoded = try? JSONEncoder().encode(order) else {
             print("Failed to encode order")
@@ -30,10 +34,11 @@ struct CheckoutView: View {
             confirmationMessage = "Your order for \(decodedOrder.quantity)x \(Order.types[decodedOrder.type].lowercased()) cupcakes is on its way!"
             showingConfirmation = true
         } catch {
-            print("Checkout failed: \(error.localizedDescription)")
+            errorMessage = error.localizedDescription
+            showingError = true
         }
-        
     }
+
     var body: some View {
         ScrollView {
             VStack {
@@ -54,16 +59,34 @@ struct CheckoutView: View {
                         await placeOrder()
                     }
                 }
+                .padding()
             }
         }
         .navigationTitle("Check out")
         .navigationBarTitleDisplayMode(.inline)
+        
         .alert("Thank you!", isPresented: $showingConfirmation) {
             Button("OK") { }
         } message: {
             Text(confirmationMessage)
         }
+        
+        .alert("Checkout Failed", isPresented: $showingError) {
+            Button("OK") { }
+        } message: {
+            Text(errorMessage)
+        }
         .scrollBounceBehavior(.basedOnSize)
+    }
+}
+
+extension Order {
+    var cost: Double {
+        var base = Double(quantity) * 2.0
+        base += Double(type) / 2.0
+        if extraFrosting { base += Double(quantity) * 1.0 }
+        if addSprinkles { base += Double(quantity) * 0.5 }
+        return base
     }
 }
 
