@@ -10,27 +10,34 @@ import SwiftData
 
 struct ContentView: View {
     
-    @Query var students: [Student]
+    @Query var books: [Book]
+    
     @Environment(\.modelContext) var modelContext
     @AppStorage("notes") private var notes = ""
-
+    
+    @State private var showingAddScreen = false
+    
     var body: some View {
         NavigationStack {
-            List(students) { student in
-                Text(student.name)
-            }
-            .navigationTitle("Classroom")
-            .toolbar {
-                Button("Add") {
-                    let firstNames = ["Ginny", "Harry", "Hermione", "Luna", "Ron"]
-                    let lastNames = ["Granger", "Lovegood", "Potter", "Weasley"]
-
-                    let chosenFirstName = firstNames.randomElement()!
-                    let chosenLastName = lastNames.randomElement()!
-
-                    let student = Student(id: UUID(), name: "\(chosenFirstName) \(chosenLastName)")
-                    modelContext.insert(student)
+            List {
+                ForEach(books) { book in
+                    NavigationLink(value: book) {
+                        HStack {
+                            EmojiRatingView(rating: book.rating)
+                                .font(.largeTitle)
+                            
+                            VStack(alignment: .leading) {
+                                Text(book.title)
+                                    .font(.headline)
+                                Text(book.author)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
                 }
+            }
+            .navigationDestination(for: Book.self) { book in
+                DetailView(book: book)
             }
         }
     }
@@ -55,6 +62,18 @@ struct PushButton: View {
 }
 
 #Preview {
-    ContentView()
-        .modelContainer(for: Student.self, inMemory: true)
+    let config = ModelConfiguration(isStoredInMemoryOnly: true)
+    let container = try! ModelContainer(for: Book.self, configurations: config)
+    let example = Book(
+        title: "Test Book",
+        author: "Test Author",
+        genre: "Fantasy",
+        review: "This was a great book.",
+        rating: 4
+    )
+
+    container.mainContext.insert(example)
+
+    return ContentView()
+        .modelContainer(container)
 }
