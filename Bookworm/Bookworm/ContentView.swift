@@ -9,13 +9,22 @@ import SwiftUI
 import SwiftData
 
 struct ContentView: View {
-    
-    @Query var books: [Book]
+    @Query(sort: [
+        SortDescriptor(\Book.title),
+        SortDescriptor(\Book.author)
+    ]) var books: [Book]
     
     @Environment(\.modelContext) var modelContext
     @AppStorage("notes") private var notes = ""
     
     @State private var showingAddScreen = false
+    
+    func deleteBooks(at offsets: IndexSet) {
+        for offset in offsets {
+            let book = books[offset]
+            modelContext.delete(book)
+        }
+    }
     
     var body: some View {
         NavigationStack {
@@ -35,9 +44,21 @@ struct ContentView: View {
                         }
                     }
                 }
+                .onDelete(perform: deleteBooks)
             }
+            .navigationTitle("Bookworm")
             .navigationDestination(for: Book.self) { book in
                 DetailView(book: book)
+            }
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Add Book", systemImage: "plus") {
+                        showingAddScreen = true
+                    }
+                }
+            }
+            .sheet(isPresented: $showingAddScreen) {
+                AddBookView()
             }
         }
     }
