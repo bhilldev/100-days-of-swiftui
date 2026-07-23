@@ -19,6 +19,9 @@ struct AddBookView: View {
     @State private var genre = "Fantasy"
     @State private var review = ""
     
+    @State private var showInvalidFormAlert = false
+    @State private var invalidFormMessage = ""
+    
     let genres = ["Fantasy", "Horror", "Kids", "Mystery", "Poetry", "Romance", "Thriller"]
 
     var body: some View {
@@ -33,6 +36,11 @@ struct AddBookView: View {
                             Text($0)
                         }
                     }
+                    .alert("Invalid Book", isPresented: $showInvalidFormAlert) {
+                        Button("OK", role: .cancel) { }
+                    } message: {
+                        Text(invalidFormMessage)
+                    }
                 }
 
                 Section("Write a review") {
@@ -43,6 +51,7 @@ struct AddBookView: View {
                 Section {
                     Button("Save") {
                         // add the book
+                        guard validate() else { return }
                         let newBook = Book(title: title, author: author, genre: genre, review: review, rating: rating)
                         modelContext.insert(newBook)
                         dismiss()
@@ -51,6 +60,16 @@ struct AddBookView: View {
             }
             .navigationTitle("Add Book")
         }
+    }
+    func validate() -> Bool {
+        if title.trimmingCharacters(in: .whitespaces).isEmpty ||
+           author.trimmingCharacters(in: .whitespaces).isEmpty {
+            invalidFormMessage = "Please fill in all required fields."
+            showInvalidFormAlert.toggle()
+            return false // Validation failed
+        }
+        
+        return true // Everything looks good!
     }
 }
 

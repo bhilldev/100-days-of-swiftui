@@ -21,19 +21,36 @@ struct DetailView: View {
     
     var body: some View {
         ScrollView {
-            ZStack(alignment: .bottomTrailing) {
-                Image(book.genre)
-                    .resizable()
-                    .scaledToFit()
+            VStack {
+                ZStack(alignment: .bottomTrailing) {
+                    Image(book.genre)
+                        .resizable()
+                        .scaledToFit()
 
-                Text(book.genre.uppercased())
+                    Text(book.genre.uppercased())
+                        .font(.caption)
+                        .fontWeight(.black)
+                        .padding(8)
+                        .foregroundStyle(.white)
+                        .background(.black.opacity(0.75))
+                        .clipShape(.capsule)
+                        .offset(x: -5, y: -5)
+                }
+                
+                Text(book.author)
+                    .font(.title)
+                    .foregroundStyle(.secondary)
+
+                Text(book.review)
+                    .padding()
+
+                Text(book.date.formatted(date: .abbreviated, time: .shortened))
                     .font(.caption)
-                    .fontWeight(.black)
-                    .padding(8)
-                    .foregroundStyle(.white)
-                    .background(.black.opacity(0.75))
-                    .clipShape(.capsule)
-                    .offset(x: -5, y: -5)
+                    .foregroundStyle(.secondary)
+
+                RatingView(rating: .constant(book.rating))
+                    .font(.largeTitle)
+                    .padding()
             }
         }
         .navigationTitle(book.title)
@@ -50,28 +67,27 @@ struct DetailView: View {
                 showingDeleteAlert = true
             }
         }
-        
-        Text(book.author)
-            .font(.title)
-            .foregroundStyle(.secondary)
-
-        Text(book.review)
-            .padding()
-
-        RatingView(rating: .constant(book.rating))
-            .font(.largeTitle)
     }
-    
 }
 
 #Preview {
     do {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try ModelContainer(for: Book.self, configurations: config)
-        let example = Book(title: "Test Book", author: "Test Author", genre: "Fantasy", review: "This was a great book; I really enjoyed it.", rating: 4)
+        
+        let example = Book(
+            title: "Test Book",
+            author: "Test Author",
+            genre: "Fantasy",
+            review: "This was a great book; I really enjoyed reading it from start to finish.",
+            rating: 4,
+            date: .now
+        )
 
-        return DetailView(book: example)
-            .modelContainer(container)
+        return NavigationStack {
+            DetailView(book: example)
+        }
+        .modelContainer(container)
     } catch {
         return Text("Failed to create preview: \(error.localizedDescription)")
     }
