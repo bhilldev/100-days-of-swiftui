@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct AddView: View {
     @State private var name = "New expense"
@@ -13,10 +14,11 @@ struct AddView: View {
     @State private var amount = 0.0
     @Environment(\.dismiss) private var dismiss
     @Environment(\.locale) private var locale
-    
-    var expenses: Expenses
+    @Environment(\.modelContext) private var modelContext
     
     let types = ["Business", "Personal"]
+    let filters = ["All", "Business", "Personal"]
+    @State private var selectedFilter = "All"
     
     var body: some View {
         Form {
@@ -38,14 +40,16 @@ struct AddView: View {
         .toolbar {
             Button("Save") {
                 let item = ExpenseItem(name: name, type: type, amount: amount)
-                expenses.items.append(item)
+                modelContext.insert(item)
                 dismiss()
             }
         }
     }
 }
+
 #Preview {
     NavigationStack {
-        AddView(expenses: Expenses())
+        AddView()
     }
+    .modelContainer(for: ExpenseItem.self, inMemory: true)
 }

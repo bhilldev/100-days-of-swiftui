@@ -6,14 +6,20 @@
 //
 
 import SwiftUI
+import SwiftData
 
 // MARK: - Model
 
-struct ExpenseItem: Identifiable, Codable {
-    var id = UUID()
-    let name: String
-    let type: String
-    let amount: Double
+@Model
+class ExpenseItem {
+    var name: String
+    var type: String
+    var amount: Double
+    init(name: String, type: String, amount: Double) {
+        self.name = name
+        self.type = type
+        self.amount = amount
+    }
 }
 
 // MARK: - Styling
@@ -41,44 +47,28 @@ extension ExpenseItem {
     }
 }
 
-// MARK: - Store
-
-@Observable
-class Expenses {
-    var items = [ExpenseItem]() {
-        didSet {
-            if let encoded = try? JSONEncoder().encode(items) {
-                UserDefaults.standard.set(encoded, forKey: "Items")
-            }
-        }
-    }
-
-    init() {
-        if let savedItems = UserDefaults.standard.data(forKey: "Items") {
-            if let decoded = try? JSONDecoder().decode([ExpenseItem].self, from: savedItems) {
-                items = decoded
-                return
-            }
-        }
-
-        items = []
-    }
-}
 
 // MARK: - View
 
 struct ContentView: View {
-    @State private var expenses = Expenses()
-    @State private var showingAddExpense = false
+    @Query private var items: [ExpenseItem]
+
+    @Environment(\.modelContext) private var modelContext
     @Environment(\.locale) private var locale
+
+    @State private var sortOrder = [
+        SortDescriptor(\ExpenseItem.name)
+    ]
+
+    @State private var selectedFilter = "All"
+
+    let filters = ["All", "Business", "Personal"]
 
     var body: some View {
         NavigationStack {
             List {
-
                 ForEach(groupedExpenses.keys.sorted(), id: \.self) { key in
                     Section(key) {
-
                         ForEach(groupedExpenses[key] ?? []) { item in
                             HStack {
                                 VStack(alignment: .leading) {
@@ -93,7 +83,9 @@ struct ContentView: View {
 
                                 Text(
                                     item.amount,
-                                    format: .currency(code: locale.currency?.identifier ?? "USD")
+                                    format: .currency(
+                                        code: locale.currency?.identifier ?? "USD"
+                                    )
                                 )
                                 .foregroundStyle(item.amountColor)
                                 .fontWeight(item.amountWeight)
@@ -107,8 +99,31 @@ struct ContentView: View {
             }
             .navigationTitle("iExpense")
             .toolbar {
+                Menu("Filter", systemImage: "line.3.horizontal.decrease.circle") {
+                    Picker("Filter", selection: $selectedFilter) {
+                        ForEach(filters, id: \.self) { filter in
+                            Text(filter)
+                                .tag(filter)
+                        }
+                    }
+                }
+
+                Menu("Sort", systemImage: "arrow.up.arrow.down") {
+                    Button("Name") {
+                        sortOrder = [
+                            SortDescriptor(\ExpenseItem.name)
+                        ]
+                    }
+
+                    Button("Amount") {
+                        sortOrder = [
+                            SortDescriptor(\ExpenseItem.amount)
+                        ]
+                    }
+                }
+
                 NavigationLink {
-                    AddView(expenses: expenses)
+                    AddView()
                 } label: {
                     Label("Add", systemImage: "plus")
                 }
@@ -116,29 +131,50 @@ struct ContentView: View {
         }
     }
 
-    // MARK: - Grouping
-
     var groupedExpenses: [String: [ExpenseItem]] {
-        Dictionary(grouping: expenses.items, by: { $0.type })
+        let filteredItems = selectedFilter == "All"
+            ? items
+            : items.filter { $0.type == selectedFilter }
+
+        return Dictionary(
+            grouping: filteredItems.sorted(using: sortOrder),
+            by: \.type
+        )
     }
 
-    // MARK: - Delete safely
-
     func deleteItems(type: String, offsets: IndexSet) {
-        let items = groupedExpenses[type] ?? []
+        let sectionItems = groupedExpenses[type] ?? []
 
         for index in offsets {
-            let item = items[index]
-
-            if let originalIndex = expenses.items.firstIndex(where: { $0.id == item.id }) {
-                expenses.items.remove(at: originalIndex)
-            }
+            modelContext.delete(sectionItems[index])
         }
     }
 }
 
 #Preview {
+    let container: ModelContainer = {
+        let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
+        let container = try! ModelContainer(
+            for: ExpenseItem.self,
+            configurations: configuration
+        )
+
+        container.mainContext.insert(
+            ExpenseItem(name: "Coffee", type: "Personal", amount: 4.50)
+        )
+        container.mainContext.insert(
+            ExpenseItem(name: "Conference ticket", type: "Business", amount: 299)
+        )
+        container.mainContext.insert(
+            ExpenseItem(name: "Groceries", type: "Personal", amount: 72.35)
+        )
+        container.mainContext.insert(
+            ExpenseItem(name: "Office supplies", type: "Business", amount: 24.99)
+        )
+
+        return container
+    }()
+
     ContentView()
+        .modelContainer(container)
 }
-
-
