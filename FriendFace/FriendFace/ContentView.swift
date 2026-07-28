@@ -11,14 +11,31 @@ struct ContentView: View {
     @State private var users = [User]()
     
     var body: some View {
-        List(users) { user in
-            Text(user.name)
-        }
-        .task {
-            await loadData()
+        NavigationStack {
+            List(users) { user in
+                NavigationLink {
+                    DetailView(user: user)
+                } label: {
+                    VStack(alignment: .leading) {
+                        Text(user.name)
+                            .font(.headline)
+
+                        Text(user.isActive ? "Active" : "Inactive")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .task {
+                await loadData()
+            }
         }
     }
     func loadData() async {
+        guard users.isEmpty else {
+            print("Data already retrieved.")
+            return
+        }
         guard let url = URL(
             string: "https://www.hackingwithswift.com/samples/friendface.json"
         ) else {
@@ -35,6 +52,78 @@ struct ContentView: View {
             users = try decoder.decode([User].self, from: data)
         } catch {
             print("Failed to load users: \(error.localizedDescription)")
+        }
+    }
+}
+
+struct DetailView: View {
+    let user: User
+
+    var body: some View {
+        List {
+            Section {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(user.name)
+                        .font(.title)
+                        .fontWeight(.bold)
+
+                    Text(user.isActive ? "Active" : "Inactive")
+                        .foregroundStyle(
+                            user.isActive ? .green : .secondary
+                        )
+                }
+                .padding(.vertical, 4)
+            }
+
+            Section("User Information") {
+                DetailRow(title: "Age", value: String(user.age))
+                DetailRow(title: "Company", value: user.company)
+                DetailRow(title: "Email", value: user.email)
+                DetailRow(title: "Address", value: user.address)
+
+                DetailRow(
+                    title: "Registered",
+                    value: user.registered.formatted(
+                        date: .long,
+                        time: .omitted
+                    )
+                )
+            }
+
+            Section("About") {
+                Text(user.about)
+            }
+
+            Section("Tags") {
+                ForEach(user.tags, id: \.self) { tag in
+                    Text(tag)
+                }
+            }
+
+            Section("Friends") {
+                ForEach(user.friends) { friend in
+                    Text(friend.name)
+                }
+            }
+        }
+        .navigationTitle(user.name)
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+struct DetailRow: View {
+    let title: String
+    let value: String
+
+    var body: some View {
+        HStack(alignment: .top) {
+            Text(title)
+                .foregroundStyle(.secondary)
+
+            Spacer()
+
+            Text(value)
+                .multilineTextAlignment(.trailing)
         }
     }
 }
