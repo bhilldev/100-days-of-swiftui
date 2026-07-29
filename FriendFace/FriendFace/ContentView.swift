@@ -6,9 +6,11 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct ContentView: View {
-    @State private var users = [User]()
+    @Environment(\.modelContext) var modelContext
+    @Query(sort: \User.name) private var users: [User]
     
     var body: some View {
         NavigationStack {
@@ -49,7 +51,41 @@ struct ContentView: View {
             let decoder = JSONDecoder()
             decoder.dateDecodingStrategy = .iso8601
             
-            users = try decoder.decode([User].self, from: data)
+            let downloadedUsers = try decoder.decode(
+                [DownloadedUser].self,
+                from: data
+            )
+
+            for downloadedUser in downloadedUsers {
+                var storedFriends = [Friend]()
+
+                for downloadedFriend in downloadedUser.friends {
+                    let storedFriend = Friend(
+                        id: downloadedFriend.id,
+                        name: downloadedFriend.name
+                    )
+
+                    storedFriends.append(storedFriend)
+                }
+
+                let storedUser = User(
+                    id: downloadedUser.id,
+                    isActive: downloadedUser.isActive,
+                    name: downloadedUser.name,
+                    age: downloadedUser.age,
+                    company: downloadedUser.company,
+                    email: downloadedUser.email,
+                    address: downloadedUser.address,
+                    about: downloadedUser.about,
+                    registered: downloadedUser.registered,
+                    tags: downloadedUser.tags,
+                    friends: storedFriends
+                )
+
+                modelContext.insert(storedUser)
+            }
+
+            try modelContext.save()
         } catch {
             print("Failed to load users: \(error.localizedDescription)")
         }
@@ -130,4 +166,5 @@ struct DetailRow: View {
 
 #Preview {
     ContentView()
+        .modelContainer(for: [User.self, Friend.self], inMemory: true)
 }
