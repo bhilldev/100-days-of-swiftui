@@ -17,6 +17,9 @@ struct ContentView: View {
     @State private var selectedItem: PhotosPickerItem?
     @State private var currentFilter: CIFilter = CIFilter.sepiaTone()
     @State private var showingFilters = false
+    @State private var filterRadius = 100.0
+    @State private var filterAngle = 0.0
+    
     
     @AppStorage("filterCount") var filterCount = 0
     @Environment(\.requestReview) var requestReview
@@ -30,8 +33,16 @@ struct ContentView: View {
         let inputKeys = currentFilter.inputKeys
 
         if inputKeys.contains(kCIInputIntensityKey) { currentFilter.setValue(filterIntensity, forKey: kCIInputIntensityKey) }
-        if inputKeys.contains(kCIInputRadiusKey) { currentFilter.setValue(filterIntensity * 200, forKey: kCIInputRadiusKey) }
         if inputKeys.contains(kCIInputScaleKey) { currentFilter.setValue(filterIntensity * 10, forKey: kCIInputScaleKey) }
+        if inputKeys.contains(kCIInputRadiusKey) {
+            currentFilter.setValue(
+                filterRadius,
+                forKey: kCIInputRadiusKey
+            )
+        }
+        if inputKeys.contains(kCIInputAngleKey) {
+            currentFilter.setValue(filterAngle, forKey: kCIInputAngleKey)
+        }
         
         guard let outputImage = currentFilter.outputImage else { return }
         guard let cgImage = context.createCGImage(outputImage, from: outputImage.extent) else { return }
@@ -70,29 +81,62 @@ struct ContentView: View {
                     }
                 }
                 Spacer()
-                
-                HStack {
-                    Text("Intensity")
-                    Slider(
-                        value: $filterIntensity,
-                        onEditingChanged: { editing in
-                            if !editing {
-                                applyProcessing()
-                            }
+                if processedImage != nil {
+                    if currentFilter.inputKeys.contains(kCIInputIntensityKey) {
+                        HStack {
+                            Text("Intensity")
+                            Slider(
+                                value: $filterIntensity,
+                                in: 0...1,
+                                onEditingChanged: { editing in
+                                    if !editing {
+                                        applyProcessing()
+                                    }
+                                }
+                            )
                         }
-                    )
-                }
-                .padding(.vertical)
-                
-                HStack {
-                    Button("Change Filter", action: changeFilter)
-                    // change filter
-                }
-                
-                Spacer()
-                
-                if let processedImage {
-                    ShareLink(item: processedImage, preview: SharePreview("Instafilter image", image: processedImage))
+                    }
+
+                    if currentFilter.inputKeys.contains(kCIInputRadiusKey) {
+                        HStack {
+                            Text("Radius")
+                            Slider(
+                                value: $filterRadius,
+                                in: 0...100,
+                                onEditingChanged: { editing in
+                                    if !editing {
+                                        applyProcessing()
+                                    }
+                                }
+                            )
+                        }
+                    }
+
+                    if currentFilter.inputKeys.contains(kCIInputAngleKey) {
+                        HStack {
+                            Text("Angle")
+                            Slider(
+                                value: $filterAngle,
+                                in: -Double.pi...Double.pi,
+                                onEditingChanged: { editing in
+                                    if !editing {
+                                        applyProcessing()
+                                    }
+                                }
+                            )
+                        }
+                    }
+
+                    HStack {
+                        Button("Change Filter", action: changeFilter)
+                        // change filter
+                    }
+                    
+                    Spacer()
+                    
+                    if let processedImage {
+                        ShareLink(item: processedImage, preview: SharePreview("Instafilter image", image: processedImage))
+                    }
                 }
                     
             }
@@ -107,6 +151,18 @@ struct ContentView: View {
                 Button("Sepia Tone") { setFilter(CIFilter.sepiaTone()) }
                 Button("Unsharp Mask") { setFilter(CIFilter.unsharpMask()) }
                 Button("Vignette") { setFilter(CIFilter.vignette()) }
+                
+                Button("Bloom") {
+                    setFilter(CIFilter.bloom())
+                }
+                Button("Motion Blur") {
+                    setFilter(CIFilter.motionBlur())
+                }
+                Button("Hue Adjust") {
+                    setFilter(CIFilter.hueAdjust())
+                }
+                
+                
                 Button("Cancel", role: .cancel) { }
             }
         }
