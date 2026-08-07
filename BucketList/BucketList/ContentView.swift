@@ -6,38 +6,83 @@
 //
 
 import SwiftUI
+import MapKit
+import LocalAuthentication
 
-enum LoadingState {
-    case loading, success, failed
+struct Location: Identifiable {
+    let id = UUID()
+    var name: String
+    var coordinate: CLLocationCoordinate2D
 }
 
-struct LoadingView: View {
-    @State private var loadingState = LoadingState.loading
+struct ContentView: View {
+    @State private var position = MapCameraPosition.region(
+        MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: 51.507222, longitude: -0.1275),
+            span: MKCoordinateSpan(latitudeDelta: 1, longitudeDelta: 1)
+        )
+    )
     
-    var body: some View {
-        Text("Loading...")
-        switch loadingState {
-        case .loading:
-            LoadingView()
-        case .success:
-            SuccessView()
-        case .failed:
-            FailedView()
+    @State private var isUnlocked = false
+    
+    func authenticate() {
+        let context = LAContext()
+        var error: NSError?
+
+        // check whether biometric authentication is possible
+        if context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) {
+            // it's possible, so go ahead and use it
+            let reason = "We need to unlock your data."
+
+            context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) { success, authenticationError in
+                // authentication has now completed
+                if success {
+                    isUnlocked = true
+                } else {
+                    // there was a problem
+                }
+            }
+        } else {
+            // no biometrics
         }
     }
-}
+    let locations = [
+        Location(name: "Buckingham Palace", coordinate: CLLocationCoordinate2D(latitude: 51.501, longitude: -0.141)),
+        Location(name: "Tower of London", coordinate: CLLocationCoordinate2D(latitude: 51.508, longitude: -0.076))
+    ]
 
-struct SuccessView: View {
     var body: some View {
-        Text("Success!")
+        MapReader { proxy in
+            Map(position: $position) {
+                ForEach(locations) { location in
+                    Annotation(location.name, coordinate: location.coordinate) {
+                        Text(location.name)
+                            .font(.headline)
+                            .padding()
+                            .background(.blue)
+                            .foregroundStyle(.white)
+                            .clipShape(.capsule)
+                    }
+                    .annotationTitles(.hidden)
+                }
+            }
+            .onTapGesture { position in
+                if let coordinate = proxy.convert(position, from: .local) {
+                    print(coordinate)
+                }
+            }
+        }
+        VStack {
+            if isUnlocked {
+                Text("Unlocked")
+            } else {
+                Text("Locked")
+            }
+        }
+        .onAppear(perform: authenticate)
     }
 }
 
-struct FailedView: View {
-    var body: some View {
-        Text("Failed.")
-    }
-}
 #Preview {
-    LoadingView()
+    ContentView()
 }
