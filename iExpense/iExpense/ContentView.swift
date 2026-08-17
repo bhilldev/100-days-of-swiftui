@@ -90,6 +90,9 @@ struct ContentView: View {
                                 .foregroundStyle(item.amountColor)
                                 .fontWeight(item.amountWeight)
                             }
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityLabel("\(item.name), \(item.amount.formatted(.currency(code: locale.currency?.identifier ?? "USD")))")
+                            .accessibilityHint(item.type)
                         }
                         .onDelete { offsets in
                             deleteItems(type: key, offsets: offsets)

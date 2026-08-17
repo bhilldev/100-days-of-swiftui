@@ -36,6 +36,9 @@ struct MissionCardView: View {
             RoundedRectangle(cornerRadius: 10)
                 .stroke(.lightBackground)
         )
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(mission.displayName), launched \(mission.formattedLaunchDate)")
+        .accessibilityHint("Tap to view mission details")
     }
 }
 

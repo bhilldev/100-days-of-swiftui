@@ -33,6 +33,8 @@ struct ContentView: View {
                 } label: {
                     Image(systemName: showingGrid ? "list.bullet" : "square.grid.2x2")
                 }
+                .accessibilityLabel(showingGrid ? "Switch to list view" : "Switch to grid view")
+                    .accessibilityHint("Changes the arrangement of missions")
             }
             // Define mission navigation once so both layouts can link using mission values.
             .navigationDestination(for: Mission.self) { mission in

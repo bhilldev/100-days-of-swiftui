@@ -36,6 +36,9 @@ struct CrewScrollView: View {
                         }
                         .padding(.horizontal)
                     }
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("\(crewMember.astronaut.name), role: \(crewMember.role)")
+                    .accessibilityHint("Tap to view biography")
                 }
             }
         }
