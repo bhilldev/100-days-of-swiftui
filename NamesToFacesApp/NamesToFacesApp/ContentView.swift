@@ -14,6 +14,9 @@ struct ContentView: View {
     
     // Automatically fetches contacts sorted alphabetically
     @Query(sort: \Person.name) private var people: [Person]
+    
+    // Wrap in @State so SwiftUI doesn't recreate the fetcher on view updates
+    @State private var locationFetcher = LocationFetcher()
 
     // State management for picker and naming modal
     @State private var selectedItem: PhotosPickerItem?
@@ -49,7 +52,7 @@ struct ContentView: View {
             }
             .navigationTitle("Remember Them")
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItemGroup(placement: .topBarTrailing) {
                     PhotosPicker(selection: $selectedItem, matching: .images) {
                         Image(systemName: "plus")
                     }
@@ -106,6 +109,9 @@ struct ContentView: View {
                             .disabled(photoName.trimmingCharacters(in: .whitespaces).isEmpty)
                         }
                     }
+                    .onAppear {
+                        locationFetcher.start()
+                    }
                 }
             }
         }
@@ -117,9 +123,18 @@ struct ContentView: View {
             return
         }
         
-        let newPerson = Person(name: photoName, photoData: tempImageData)
+        // Grab the last known coordinate from LocationFetcher
+        let coordinate = locationFetcher.lastKnownLocation
+        
+        let newPerson = Person(
+            name: photoName,
+            photoData: tempImageData,
+            latitude: coordinate?.latitude,
+            longitude: coordinate?.longitude
+        )
+        
         modelContext.insert(newPerson)
-        print("Saved \(photoName) to SwiftData")
+        print("Saved \(photoName) to SwiftData with location: \(coordinate?.latitude ?? 0), \(coordinate?.longitude ?? 0)")
 
         resetState()
     }
@@ -131,6 +146,7 @@ struct ContentView: View {
         showNamePrompt = false
     }
 }
+
 #Preview {
     ContentView()
 }
