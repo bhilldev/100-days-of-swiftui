@@ -9,20 +9,25 @@ import SwiftUI
 import Combine
 
 struct ContentView: View {
-    @Environment(\.accessibilityDifferentiateWithoutColor) var differentiateWithoutColor
-
-    var body: some View {
-        HStack {
-            if differentiateWithoutColor {
-                Image(systemName: "checkmark.circle")
-            }
-
-            Text("Success")
+    @Environment(\.accessibilityReduceMotion) var reduceMotion
+    @State private var scale = 1.0
+    
+    func withOptionalAnimation<Result>(_ animation: Animation? = .default, _ body: () throws -> Result) rethrows -> Result {
+        if UIAccessibility.isReduceMotionEnabled {
+            return try body()
+        } else {
+            return try withAnimation(animation, body)
         }
-        .padding()
-        .background(differentiateWithoutColor ? .black : .green)
-        .foregroundStyle(.white)
-        .clipShape(.capsule)
+    }
+    
+    var body: some View {
+        Button("Hello, World!") {
+            withOptionalAnimation {
+                scale *= 1.5
+            }
+            
+        }
+        .scaleEffect(scale)
     }
 }
 #Preview {
