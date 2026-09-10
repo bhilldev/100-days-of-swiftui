@@ -7,16 +7,37 @@
 
 import SwiftUI
 
+// Custom ViewModifier to handle background color based on drag offset
+struct CardBackgroundModifier: ViewModifier {
+    let offset: CGSize
+
+    func body(content: Content) -> some View {
+        content
+            .background(
+                RoundedRectangle(cornerRadius: 25)
+                    .fill(
+                        offset.width == 0
+                            ? .clear
+                            : (offset.width > 0 ? .green : .red)
+                    )
+            )
+    }
+}
+
+extension View {
+    func cardBackground(for offset: CGSize) -> some View {
+        self.modifier(CardBackgroundModifier(offset: offset))
+    }
+}
+
 struct CardView: View {
     let card: Card
-    var removal: (() -> Void)? = nil
+    var removal: ((_ reinsert: Bool) -> Void)? = nil
     @Environment(\.accessibilityDifferentiateWithoutColor) var accessibilityDifferentiateWithoutColor
     @Environment(\.accessibilityVoiceOverEnabled) var accessibilityVoiceOverEnabled
 
     @State private var isShowingAnswer = false
     @State private var offset = CGSize.zero
-    
-    
 
     var body: some View {
         ZStack {
@@ -26,13 +47,11 @@ struct CardView: View {
                         ? .white
                         : .white
                             .opacity(1 - Double(abs(offset.width / 50)))
-
                 )
                 .background(
                     accessibilityDifferentiateWithoutColor
                         ? nil
-                        : RoundedRectangle(cornerRadius: 25)
-                            .fill(offset.width > 0 ? .green : .red)
+                        : Color.clear.cardBackground(for: offset)
                 )
                 .shadow(radius: 10)
 
@@ -68,7 +87,13 @@ struct CardView: View {
                 }
                 .onEnded { _ in
                     if abs(offset.width) > 100 {
-                        removal?()
+                        if offset.width < 0 {
+                            // Swiped left (wrong answer) -> re-insert card
+                            removal?(true)
+                        } else {
+                            // Swiped right (correct answer) -> remove permanently
+                            removal?(false)
+                        }
                     } else {
                         offset = .zero
                     }

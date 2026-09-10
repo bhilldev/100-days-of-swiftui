@@ -34,10 +34,12 @@ struct ContentView: View {
                     .background(.black.opacity(0.75))
                     .clipShape(.capsule)
                 ZStack {
-                    ForEach(0..<cards.count, id: \.self) { index in
-                        CardView(card: cards[index]) {
+                    ForEach(cards) { card in
+                        let index = index(for: card)
+
+                        CardView(card: card) { reinsert in
                             withAnimation {
-                                removeCard(at: index)
+                                removeCard(at: index, reinsert: reinsert)
                             }
                         }
                         .stacked(at: index, in: cards.count)
@@ -133,14 +135,22 @@ struct ContentView: View {
         .onAppear(perform: resetCards)
     }
 
-    func removeCard(at index: Int) {
-        guard index >= 0 else { return }
+    func removeCard(at index: Int, reinsert: Bool = false) {
+        guard index >= 0 && index < cards.count else { return }
 
-        cards.remove(at: index)
+        let card = cards.remove(at: index)
+
+        if reinsert {
+            // Move the missed card to the bottom of the deck (index 0)
+            cards.insert(card, at: 0)
+        }
 
         if cards.isEmpty {
             isActive = false
         }
+    }
+    func index(for card: Card) -> Int {
+        cards.firstIndex(where: { $0.id == card.id }) ?? 0
     }
     func resetCards() {
         timeRemaining = 100

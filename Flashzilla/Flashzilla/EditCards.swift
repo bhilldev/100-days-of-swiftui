@@ -12,6 +12,7 @@ struct EditCards: View {
     @State private var cards = [Card]()
     @State private var newPrompt = ""
     @State private var newAnswer = ""
+    
 
     var body: some View {
         NavigationStack {
@@ -68,6 +69,9 @@ struct EditCards: View {
         let card = Card(prompt: trimmedPrompt, answer: trimmedAnswer)
         cards.insert(card, at: 0)
         saveData()
+        
+        newPrompt = ""
+        newAnswer = ""
     }
 
     func removeCards(at offsets: IndexSet) {
