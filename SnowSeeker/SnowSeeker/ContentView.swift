@@ -8,28 +8,25 @@
 import SwiftUI
 
 struct ContentView: View {
-    @Environment(\.horizontalSizeClass) var horizontalSizeClass
-    
-    var body: some View {
-        ViewThatFits {
-            Rectangle()
-                .frame(width: 500, height: 200)
-            
-            Circle()
-                .frame(width: 200, height: 200)
-        }
-        
-    }
-}
+    @State private var searchText = ""
+    let allNames = ["Subh", "Vina", "Melvin", "Stefanie"]
 
-struct UserView: View {
-    var body: some View {
-        Group {
-            Text("Name: Paul")
-            Text("Country: England")
-            Text("Pets: Luna and Arya")
+    var filteredNames: [String] {
+        if searchText.isEmpty {
+            allNames
+        } else {
+            allNames.filter { $0.localizedStandardContains(searchText) }
         }
-        .font(.title)
+    }
+
+    var body: some View {
+        NavigationStack {
+            List(filteredNames, id: \.self) { name in
+                Text(name)
+            }
+            .searchable(text: $searchText, prompt: "Look for something")
+            .navigationTitle("Searching")
+        }
     }
 }
 
